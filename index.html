@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WOPR Tests</title>
+  <style>
+    /* ====== Theme (inspired by Kahoot — vibrant, playful transitions) ====== */
+    :root{
+      --bg:#0f172a;           /* slate-900 */
+      --card:#111b34;         
+      --text:#e6f0ff;
+      --muted:#9fb3d6;
+      --accent:#3b82f6;       /* blue-500 */
+      --accent-2:#1e40af;     /* blue-800 */
+      --accent-3:#38bdf8;     /* sky-400 */
+      --ok:#22c55e;           /* green-500 */
+      --warn:#f59e0b;         /* amber-500 */
+      --err:#ef4444;          /* red-500 */
+      --shadow:0 20px 40px rgba(0,0,0,.35);
+    }
+    body.light{
+      --bg:#f5f8ff;
+      --card:#ffffff;
+      --text:#0b1220;
+      --muted:#475569;
+      --accent:#1d4ed8;
+      --accent-2:#0b2a6f;
+      --accent-3:#0284c7;
+      --shadow:0 18px 36px rgba(10,25,50,.12);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+      background:radial-gradient(1200px 800px at 10% -20%, rgba(59,130,246,.25), transparent 60%),
+                 radial-gradient(1000px 600px at 110% 10%, rgba(2,132,199,.25), transparent 60%),
+                 var(--bg);
+      color:var(--text);
+      display:flex; flex-direction:column;
+    }
+
+    /* ====== Top Nav ====== */
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;backdrop-filter: blur(6px);position:sticky;top:0;z-index:50}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.4px}
+    .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-3));box-shadow:0 8px 20px rgba(59,130,246,.35)}
+    nav{display:flex;gap:8px;flex-wrap:wrap}
+    .tab{border:0;border-radius:12px;padding:10px 14px;background:transparent;color:var(--text);cursor:pointer;font-weight:600;opacity:.85}
+    .tab.active{background:linear-gradient(135deg,rgba(59,130,246,.18),rgba(2,132,199,.14)); box-shadow:0 10px 24px rgba(2,132,199,.18);opacity:1}
+    .right{display:flex;gap:10px;align-items:center}
+    .toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+
+    main{flex:1;max-width:1100px;width:100%;margin:0 auto;padding:18px}
+
+    /* ====== Cards & buttons ====== */
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:16px;box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+    h1,h2,h3{margin:.2em 0 .5em}
+    h1{font-size:28px}
+    h2{font-size:22px}
+    h3{font-size:18px}
+    label{display:block;margin:10px 0 4px;color:var(--muted);font-size:14px}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--text)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .btn{padding:10px 14px;border-radius:12px;border:0;font-weight:700;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-3));color:white}
+    .btn.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.12)}
+    .btn.warn{background:linear-gradient(135deg,#f59e0b,#f97316);color:#111}
+    .btn.ghost{background:transparent;color:var(--muted)}
+
+    .muted{color:var(--muted)}
+    .small{font-size:12px}
+    .hidden{display:none}
+
+    /* ====== List styling ====== */
+    .list{list-style:none;padding:0;margin:8px 0}
+    .list li{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;border:1px dashed rgba(255,255,255,.12);margin:6px 0}
+
+    /* ====== Choices (participant) ====== */
+    .choice{display:block;margin:8px 0;padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.12);cursor:pointer;transition:transform .1s ease, background .2s ease}
+    .choice:hover{transform:translateY(-2px)}
+    .choice.selected{outline:3px solid rgba(59,130,246,.35);background:rgba(59,130,246,.12)}
+
+    /* ====== Animations ====== */
+    .fade-enter{opacity:0;transform:translateY(8px)}
+    .fade-enter-active{opacity:1;transform:translateY(0);transition:opacity .35s ease, transform .35s ease}
+    .slide-in{animation:slideIn .45s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none}}
+
+    /* ====== Footer ====== */
+    footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+
+    /* Responsive */
+    @media (max-width:640px){
+      header{gap:10px}
+      .brand span{display:none}
+    }
+  </style>
+</head>
+<body class="light">
+  <header class="card" style="margin:12px 12px 0">
+    <div class="brand">
+      <div class="logo" aria-hidden></div>
+      <span>WOPR Tests</span>
+    </div>
+    <nav>
+      <button class="tab active" data-tab="home">Strona główna</button>
+      <button class="tab" data-tab="admin">Admin</button>
+      <button class="tab" data-tab="learn">Nauka</button>
+      <button class="tab" data-tab="links">Przydatne linki</button>
+    </nav>
+    <div class="right">
+      <span id="authBadge" class="muted small">Gość</span>
+      <label class="toggle"><input id="themeSwitch" type="checkbox"> Jasny / Ciemny</label>
+    </div>
+  </header>
+
+  <main>
+    <!-- HOME (participant) -->
+    <section id="tab-home" class="card slide-in">
+      <h1>Dołącz do testu</h1>
+      <div class="row">
+        <div style="flex:1;min-width:220px">
+          <label>Kod testu</label>
+          <input id="joinCode" placeholder="np. 123456" />
+        </div>
+        <div style="flex:2;min-width:240px">
+          <label>Imię i nazwisko</label>
+          <input id="participantName" placeholder="Jan Kowalski" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="joinBtn" class="btn primary">Wejdź</button>
+        <span id="homeInfo" class="muted small"></span>
+      </div>
+
+      <div id="participantArea" class="hidden">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 id="testTitle">Test</h2>
+          <div id="countdown" class="muted"></div>
+        </div>
+        <div id="questionBox"></div>
+        <div class="row">
+          <button id="nextBtn" class="btn primary">Dalej</button>
+          <button id="submitBtn" class="btn secondary">Zakończ test</button>
+        </div>
+      </div>
+
+      <div id="resultArea" class="hidden">
+        <h2>Wynik</h2>
+        <p id="scoreText"></p>
+        <button id="backHome" class="btn secondary">Powrót</button>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="tab-admin" class="card hidden">
+      <h1>Panel administratora</h1>
+      <div id="adminLoggedOut">
+        <p class="muted">Zaloguj się jako admin (Firebase Authentication — e‑mail i hasło).</p>
+        <div class="row">
+          <div style="flex:1;min-width:220px">
+            <label>E‑mail</label>
+            <input id="admEmail" type="email" placeholder="admin@twojadomena.pl" />
+          </div>
+          <div style="flex:1;min-width:220px">
+            <label>Hasło</label>
+            <input id="admPass" type="password" placeholder="••••••••" />
+          </div>
+        </div>
+        <div class="row">
+          <button id="admLoginBtn" class="btn primary">Zaloguj</button>
+          <button id="admRegisterBtn" class="btn secondary">Utwórz konto admina</button>
+        </div>
+      </div>
+
+      <div id="adminArea" class="hidden">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2>Ustawienia i uruchamianie testów</h2>
+          <button id="admLogoutBtn" class="btn ghost">Wyloguj</button>
+        </div>
+
+        <div class="card" style="background:transparent">
+          <div class="row">
+            <div style="flex:2;min-width:240px">
+              <label>Nazwa testu</label>
+              <input id="testName" placeholder="Test próbny" />
+            </div>
+            <div style="flex:1;min-width:140px">
+              <label>Ilość pytań</label>
+              <input id="numQuestions" type="number" min="1" value="5" />
+            </div>
+            <div style="flex:1;min-width:180px">
+              <label>Czas (sekundy, 0 = bez limitu)</label>
+              <input id="totalTime" type="number" min="0" value="0" />
+            </div>
+            <div style="flex:1;min-width:160px">
+              <label>Tryb losowy</label>
+              <select id="randomMode">
+                <option value="on">Losowy</option>
+                <option value="off">Ręczny wybór</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <button id="createTestBtn" class="btn primary">Utwórz i uruchom test</button>
+            <button id="viewActiveBtn" class="btn secondary">Aktywne testy</button>
+          </div>
+        </div>
+
+        <div class="card" style="background:transparent">
+          <h3>Edytor bazy pytań</h3>
+          <div class="row">
+            <div style="flex:2;min-width:280px">
+              <label>Treść pytania</label>
+              <input id="qText" />
+            </div>
+            <div style="flex:1;min-width:120px"><label>A</label><input id="optA"></div>
+            <div style="flex:1;min-width:120px"><label>B</label><input id="optB"></div>
+            <div style="flex:1;min-width:120px"><label>C</label><input id="optC"></div>
+            <div style="flex:1;min-width:120px"><label>D</label><input id="optD"></div>
+            <div style="flex:1;min-width:160px"><label>Poprawna (A/B/C/D)</label><input id="correctOpt" maxlength="1"></div>
+          </div>
+          <div class="row">
+            <button id="addQBtn" class="btn primary">Dodaj pytanie</button>
+          </div>
+          <ul id="questionsList" class="list"></ul>
+        </div>
+
+        <div class="card" style="background:transparent">
+          <h3>Przydatne linki</h3>
+          <div class="row">
+            <div style="flex:2;min-width:280px"><label>Tytuł</label><input id="linkTitle"></div>
+            <div style="flex:3;min-width:300px"><label>URL</label><input id="linkUrl" placeholder="https://..."/></div>
+          </div>
+          <div class="row">
+            <button id="addLinkBtn" class="btn primary">Dodaj link</button>
+          </div>
+          <ul id="adminLinksList" class="list"></ul>
+        </div>
+      </div>
+
+      <div id="activeTests" class="hidden">
+        <h3>Aktywne testy</h3>
+        <ul id="activeList" class="list"></ul>
+        <div class="row"><button id="closeActive" class="btn secondary">Zamknij</button></div>
+      </div>
+    </section>
+
+    <!-- LEARN (all questions with answers) -->
+    <section id="tab-learn" class="card hidden">
+      <h1>Nauka — pytania i odpowiedzi</h1>
+      <p class="muted small">Wszystkie pytania z centralnej bazy (Firestore). Poprawne odpowiedzi są wyróżnione.</p>
+      <ul id="learnList" class="list"></ul>
+    </section>
+
+    <!-- LINKS (useful links) -->
+    <section id="tab-links" class="card hidden">
+      <h1>Przydatne linki</h1>
+      <ul id="linksList" class="list"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <small>WOPR Tests — quiz na GitHub Pages (Firebase)</small>
+  </footer>
+
+  <!-- Firebase SDK (ES modules) -->
+  <script type="module">
+    // === 1) WPROWADŹ SWOJĄ KONFIGURACJĘ FIREBASE ===
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // === 2) Import SDK (moduły) ===
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+    import { getFirestore, collection, addDoc, getDocs, getDoc, setDoc, doc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // ===== Helpers =====
+    const $ = s => document.querySelector(s);
+    const $$ = s => document.querySelectorAll(s);
+    const byId = id => document.getElementById(id);
+    const toast = (msg)=>{ const el=document.createElement('div'); el.textContent=msg; el.style.position='fixed'; el.style.bottom='20px'; el.style.left='50%'; el.style.transform='translateX(-50%)'; el.style.background='linear-gradient(135deg,var(--accent),var(--accent-3))'; el.style.color='#fff'; el.style.padding='10px 14px'; el.style.borderRadius='10px'; el.style.boxShadow='var(--shadow)'; el.style.zIndex=1000; document.body.appendChild(el); setTimeout(()=>el.remove(),2200); };
+
+    // ===== Theme =====
+    const themeSwitch = byId('themeSwitch');
+    const pref = localStorage.getItem('wopr_theme')||'light';
+    if(pref==='dark'){ document.body.classList.remove('light'); themeSwitch.checked=true; } else { document.body.classList.add('light'); }
+    themeSwitch.addEventListener('change',()=>{
+      if(themeSwitch.checked){ document.body.classList.remove('light'); localStorage.setItem('wopr_theme','dark'); }
+      else{ document.body.classList.add('light'); localStorage.setItem('wopr_theme','light'); }
+    });
+
+    // ===== Tabs =====
+    const tabs = $$('.tab');
+    const sections = ['home','admin','learn','links'];
+    tabs.forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+    function switchTab(key){
+      tabs.forEach(t=>t.classList.toggle('active', t.dataset.tab===key));
+      sections.forEach(id=>{
+        const el = byId('tab-'+id);
+        if(!el) return;
+        if(id===key){ el.classList.remove('hidden'); el.classList.add('fade-enter'); requestAnimationFrame(()=>el.classList.add('fade-enter-active')); setTimeout(()=>el.classList.remove('fade-enter','fade-enter-active'),400); }
+        else el.classList.add('hidden');
+      });
+    }
+
+    // ===== Auth state =====
+    const authBadge = byId('authBadge');
+    const adminLoggedOut = byId('adminLoggedOut');
+    const adminArea = byId('adminArea');
+    onAuthStateChanged(auth, (user)=>{
+      if(user){ authBadge.textContent = 'Admin: '+(user.email||''); adminLoggedOut.classList.add('hidden'); adminArea.classList.remove('hidden'); loadQuestions(); loadAdminLinks(); }
+      else{ authBadge.textContent = 'Gość'; adminLoggedOut.classList.remove('hidden'); adminArea.classList.add('hidden'); }
+    });
+
+    // ===== Auth actions =====
+    byId('admLoginBtn').addEventListener('click', async ()=>{
+      const email = byId('admEmail').value.trim(); const pass = byId('admPass').value;
+      try{ await signInWithEmailAndPassword(auth,email,pass); toast('Zalogowano'); }
+      catch(e){ alert('Logowanie nieudane: '+e.message); }
+    });
+    byId('admRegisterBtn').addEventListener('click', async ()=>{
+      const email = byId('admEmail').value.trim(); const pass = byId('admPass').value;
+      try{ await createUserWithEmailAndPassword(auth,email,pass); toast('Utworzono konto admina'); }
+      catch(e){ alert('Rejestracja nieudana: '+e.message); }
+    });
+    byId('admLogoutBtn').addEventListener('click', ()=> signOut(auth));
+
+    // ===== Firestore Collections =====
+    const colQuestions = collection(db,'questions');
+    const colTests = collection(db,'tests');
+    const colLinks = collection(db,'links');
+
+    // ===== Admin: Questions CRUD =====
+    const qText = byId('qText'), optA = byId('optA'), optB = byId('optB'), optC = byId('optC'), optD = byId('optD'), correctOpt = byId('correctOpt');
+    const questionsList = byId('questionsList');
+
+    async function loadQuestions(){
+      questionsList.innerHTML = '<li class="muted">Ładowanie…</li>';
+      const snap = await getDocs(query(colQuestions, orderBy('createdAt','asc')));
+      questionsList.innerHTML='';
+      if(snap.empty){ questionsList.innerHTML = '<li class="muted">Brak pytań — dodaj pierwsze.</li>'; return; }
+      snap.forEach(docu=>{
+        const q = docu.data(); q.id = docu.id;
+        const li = document.createElement('li');
+        li.innerHTML = `<div><strong>${escapeHtml(q.text)}</strong><div class="small muted">A: ${escapeHtml(q.opts?.A||'')} • B: ${escapeHtml(q.opts?.B||'')} • C: ${escapeHtml(q.opts?.C||'')} • D: ${escapeHtml(q.opts?.D||'')} — <strong>${q.correct}</strong></div></div>
+          <div>
+            <button class="btn secondary" data-id="${q.id}">Edytuj</button>
+            <button class="btn secondary" data-del="${q.id}">Usuń</button>
+          </div>`;
+        questionsList.appendChild(li);
+      });
+      // attach handlers
+      questionsList.querySelectorAll('[data-id]').forEach(b=>b.addEventListener('click',()=>editQuestion(b.dataset.id)));
+      questionsList.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>deleteQuestion(b.dataset.del)));
+    }
+
+    function clearQForm(){ qText.value=''; optA.value=''; optB.value=''; optC.value=''; optD.value=''; correctOpt.value=''; }
+
+    byId('addQBtn').addEventListener('click', async ()=>{
+      const text = qText.value.trim(); const A=optA.value.trim(); const B=optB.value.trim(); const C=optC.value.trim(); const D=optD.value.trim(); const corr=(correctOpt.value||'').toUpperCase();
+      if(!text||!A||!B||!corr){ alert('Wpisz pytanie, min. A i B oraz poprawną literę.'); return; }
+      try{
+        await addDoc(colQuestions,{ text, opts:{A,B,C,D}, correct:corr, createdAt: serverTimestamp() });
+        toast('Dodano pytanie'); clearQForm(); loadQuestions(); loadLearn();
+      }catch(e){ alert('Błąd dodawania: '+e.message); }
+    });
+
+    async function editQuestion(id){
+      const ref = doc(db,'questions',id); const snap = await getDoc(ref); if(!snap.exists()) return;
+      const q = snap.data();
+      qText.value = q.text; optA.value=q.opts?.A||''; optB.value=q.opts?.B||''; optC.value=q.opts?.C||''; optD.value=q.opts?.D||''; correctOpt.value=q.correct||'';
+      byId('addQBtn').textContent='Zapisz zmiany';
+      const saveHandler = async ()=>{
+        const text=qText.value.trim(); const A=optA.value.trim(); const B=optB.value.trim(); const C=optC.value.trim(); const D=optD.value.trim(); const corr=(correctOpt.value||'').toUpperCase();
+        try{ await updateDoc(ref,{ text, opts:{A,B,C,D}, correct:corr }); toast('Zaktualizowano'); clearQForm(); byId('addQBtn').textContent='Dodaj pytanie'; loadQuestions(); loadLearn(); byId('addQBtn').removeEventListener('click',saveHandler); byId('addQBtn').addEventListener('click', addQHandler); }
+        catch(e){ alert('Błąd zapisu: '+e.message); }
+      };
+      const addQHandler = ()=>{}; // placeholder to replace listener back
+      byId('addQBtn').removeEventListener('click', addQHandler);
+      byId('addQBtn').addEventListener('click', saveHandler, { once:true });
+    }
+
+    async function deleteQuestion(id){
+      if(!confirm('Usunąć pytanie?')) return;
+      try{ await deleteDoc(doc(db,'questions',id)); toast('Usunięto'); loadQuestions(); loadLearn(); }
+      catch(e){ alert('Błąd usuwania: '+e.message); }
+    }
+
+    // ===== Admin: Useful Links =====
+    const adminLinksList = byId('adminLinksList');
+    async function loadAdminLinks(){
+      adminLinksList.innerHTML='';
+      const snap = await getDocs(query(colLinks, orderBy('createdAt','desc')));
+      if(snap.empty){ adminLinksList.innerHTML = '<li class="muted">Brak linków</li>'; return; }
+      snap.forEach(d=>{
+        const L = d.data();
+        const li = document.createElement('li');
+        li.innerHTML = `<div><strong>${escapeHtml(L.title||L.url)}</strong><div class="small muted">${escapeHtml(L.url)}</div></div>
+                        <div><button class=\"btn secondary\" data-del-link=\"${d.id}\">Usuń</button></div>`;
+        adminLinksList.appendChild(li);
+      });
+      adminLinksList.querySelectorAll('[data-del-link]').forEach(b=>b.addEventListener('click', async ()=>{
+        await deleteDoc(doc(db,'links', b.dataset.delLink)); toast('Usunięto link'); loadAdminLinks(); loadLinks();
+      }));
+    }
+    byId('addLinkBtn').addEventListener('click', async ()=>{
+      const title = byId('linkTitle').value.trim(); const url = byId('linkUrl').value.trim();
+      if(!url){ alert('URL jest wymagany'); return; }
+      try{ await addDoc(colLinks, { title, url, createdAt: serverTimestamp() }); toast('Dodano link'); byId('linkTitle').value=''; byId('linkUrl').value=''; loadAdminLinks(); loadLinks(); }
+      catch(e){ alert('Błąd dodawania linku: '+e.message); }
+    });
+
+    // ===== Admin: Create & manage tests =====
+    const activeTestsBox = byId('activeTests');
+    const activeList = byId('activeList');
+    byId('viewActiveBtn').addEventListener('click', ()=>{ activeTestsBox.classList.remove('hidden'); renderActiveTests(); });
+    byId('closeActive').addEventListener('click', ()=> activeTestsBox.classList.add('hidden'));
+
+    function randCode(){ return String(Math.floor(Math.random()*900000+100000)); }
+
+    byId('createTestBtn').addEventListener('click', async ()=>{
+      try{
+        const name = byId('testName').value.trim()||'Test';
+        const total = Math.max(0, parseInt(byId('totalTime').value)||0);
+        const count = Math.max(1, parseInt(byId('numQuestions').value)||1);
+        const random = byId('randomMode').value==='on';
+        // Pull questions
+        const snap = await getDocs(query(colQuestions, orderBy('createdAt','asc')));
+        const pool = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+        if(pool.length===0){ alert('Brak pytań w bazie'); return; }
+        let chosen = [];
+        if(random){
+          chosen = shuffle(pool).slice(0, Math.min(count, pool.length));
+        }else{
+          // For simplicity: take first N (can be evolved to a modal selector)
+          chosen = pool.slice(0, Math.min(count, pool.length));
+        }
+        const code = randCode();
+        const testDoc = await addDoc(colTests, {
+          name, code, open:true, totalSeconds: total, createdAt: serverTimestamp(),
+          questions: chosen.map(q=>({ id:q.id, text:q.text, opts:q.opts, correct:q.correct }))
+        });
+        toast('Test uruchomiony — kod: '+code);
+        renderActiveTests();
+      }catch(e){ alert('Błąd tworzenia testu: '+e.message); }
+    });
+
+    async function renderActiveTests(){
+      activeList.innerHTML='';
+      const snap = await getDocs(query(colTests, orderBy('createdAt','desc')));
+      if(snap.empty){ activeList.innerHTML='<li class="muted">Brak testów</li>'; return; }
+      snap.forEach(d=>{
+        const t = d.data();
+        const li = document.createElement('li');
+        li.innerHTML = `<div><strong>${escapeHtml(t.name)}</strong><div class="small muted">Kod: <code>${t.code}</code> • Pyt.: ${t.questions?.length||0} • Czas: ${t.totalSeconds||'brak'}</div></div>
+          <div>
+            <button class="btn secondary" data-close="${d.id}">Zakończ</button>
+            <button class="btn secondary" data-res="${d.id}">Wyniki</button>
+          </div>`;
+        activeList.appendChild(li);
+      });
+      activeList.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click', async ()=>{
+        await updateDoc(doc(db,'tests', b.dataset.close), { open:false }); toast('Zakończono test'); renderActiveTests();
+      }));
+      activeList.querySelectorAll('[data-res]').forEach(b=>b.addEventListener('click', ()=>showResults(b.dataset.res)));
+    }
+
+    async function showResults(testId){
+      const resCol = collection(db,'tests',testId,'results');
+      const snap = await getDocs(resCol);
+      if(snap.empty){ alert('Brak wyników'); return; }
+      const lines = [];
+      snap.forEach(r=>{ const x=r.data(); lines.push(`${x.name}: ${x.scorePercent}% (${x.correctCount}/${x.total})`); });
+      alert('Wyniki:\n'+lines.join('\n'));
+    }
+
+    // ===== Participant flow =====
+    const homeInfo = byId('homeInfo');
+    const joinBtn = byId('joinBtn');
+    const joinCode = byId('joinCode');
+    const participantName = byId('participantName');
+
+    const participantArea = byId('participantArea');
+    const questionBox = byId('questionBox');
+    const nextBtn = byId('nextBtn');
+    const submitBtn = byId('submitBtn');
+    const countdown = byId('countdown');
+    const resultArea = byId('resultArea');
+    const scoreText = byId('scoreText');
+    const backHome = byId('backHome');
+
+    let currentTest = null; let answers = {}; let qIndex = 0; let timer=null; let remaining=0; let participant="";
+
+    joinBtn.addEventListener('click', async ()=>{
+      const code = joinCode.value.trim(); participant = participantName.value.trim();
+      if(!code || !participant){ alert('Podaj kod i imię i nazwisko'); return; }
+      // Find test by code and open==true
+      const snap = await getDocs(query(colTests, where('code','==',code)));
+      if(snap.empty){ homeInfo.textContent = 'Nie znaleziono testu.'; return; }
+      let found = null; snap.forEach(d=>{ const t=d.data(); if(t.open) found={ id:d.id, ...t }; });
+      if(!found){ homeInfo.textContent = 'Test jest zamknięty.'; return; }
+      currentTest = found; answers={}; qIndex=0; resultArea.classList.add('hidden'); participantArea.classList.remove('hidden');
+      renderQuestion();
+      if(currentTest.totalSeconds>0){ remaining = currentTest.totalSeconds; tick(); timer=setInterval(tick,1000); }
+      else{ countdown.textContent=''; }
+      toast('Powodzenia!');
+    });
+
+    function tick(){ remaining--; if(remaining<=0){ clearInterval(timer); finishTest(); } countdown.textContent = 'Pozostały czas: '+formatTime(Math.max(remaining,0)); }
+    function formatTime(s){ const m=Math.floor(s/60), ss=String(s%60).padStart(2,'0'); return `${m}:${ss}`; }
+
+    function renderQuestion(){
+      const t=currentTest; const q=t.questions[qIndex];
+      byId('testTitle').textContent = `${t.name} — pytanie ${qIndex+1}/${t.questions.length}`;
+      questionBox.innerHTML = `<div style="font-size:18px;font-weight:700;margin-bottom:8px">${escapeHtml(q.text)}</div>`;
+      ['A','B','C','D'].forEach(letter=>{
+        if(!q.opts?.[letter]) return;
+        const div=document.createElement('div');
+        div.className='choice'; div.dataset.letter=letter; div.innerHTML = `<strong>${letter}</strong>. ${escapeHtml(q.opts[letter])}`;
+        div.addEventListener('click',()=>{
+          questionBox.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));
+          div.classList.add('selected'); answers[qIndex]=letter;
+        });
+        questionBox.appendChild(div);
+      });
+      nextBtn.disabled = qIndex >= (t.questions.length-1);
+    }
+
+    nextBtn.addEventListener('click',()=>{ if(qIndex < currentTest.questions.length-1){ qIndex++; renderQuestion(); } });
+    submitBtn.addEventListener('click',()=>{ if(confirm('Zakończyć test?')) finishTest(); });
+    backHome.addEventListener('click',()=>{ resultArea.classList.add('hidden'); participantArea.classList.add('hidden'); joinCode.value=''; participantName.value=''; });
+
+    async function finishTest(){
+      if(timer) { clearInterval(timer); timer=null; }
+      participantArea.classList.add('hidden');
+      // grade
+      let correct=0; const total=currentTest.questions.length;
+      currentTest.questions.forEach((q,idx)=>{ if(answers[idx] && answers[idx].toUpperCase()===q.correct) correct++; });
+      const percent = Math.round((correct/total)*100);
+      scoreText.textContent = `${participant}, Twój wynik: ${percent}% — ${correct}/${total}`;
+      resultArea.classList.remove('hidden');
+      try{
+        const resCol = collection(db,'tests', currentTest.id, 'results');
+        await addDoc(resCol, { name: participant, scorePercent: percent, correctCount: correct, total, answers, finishedAt: serverTimestamp() });
+      }catch(e){ console.warn('Nie zapisano wyniku:', e.message); }
+      confetti();
+    }
+
+    // ===== Learn (all Q&A) =====
+    const learnList = byId('learnList');
+    async function loadLearn(){
+      learnList.innerHTML='';
+      const snap = await getDocs(query(colQuestions, orderBy('createdAt','asc')));
+      if(snap.empty){ learnList.innerHTML='<li class="muted">Brak pytań</li>'; return; }
+      snap.forEach(d=>{
+        const q=d.data(); const li=document.createElement('li');
+        li.innerHTML = `<div><strong>${escapeHtml(q.text)}</strong>
+          <div class=\"small\">A: ${q.correct==='A'?'<b>':''}${escapeHtml(q.opts?.A||'')}${q.correct==='A'?'</b>':''}
+          • B: ${q.correct==='B'?'<b>':''}${escapeHtml(q.opts?.B||'')}${q.correct==='B'?'</b>':''}
+          • C: ${q.correct==='C'?'<b>':''}${escapeHtml(q.opts?.C||'')}${q.correct==='C'?'</b>':''}
+          • D: ${q.correct==='D'?'<b>':''}${escapeHtml(q.opts?.D||'')}${q.correct==='D'?'</b>':''}</div></div>`;
+        learnList.appendChild(li);
+      });
+    }
+
+    // ===== Links (public) =====
+    const linksList = byId('linksList');
+    async function loadLinks(){
+      linksList.innerHTML='';
+      const snap = await getDocs(query(colLinks, orderBy('createdAt','desc')));
+      if(snap.empty){ linksList.innerHTML = '<li class="muted">Brak linków</li>'; return; }
+      snap.forEach(d=>{
+        const L=d.data(); const li=document.createElement('li');
+        li.innerHTML = `<div><strong>${escapeHtml(L.title||L.url)}</strong><div class=\"small muted\">${escapeHtml(L.url)}</div></div>
+                        <div><a class=\"btn primary\" href=\"${escapeAttr(L.url)}\" target=\"_blank\" rel=\"noopener\">Otwórz</a></div>`;
+        linksList.appendChild(li);
+      });
+    }
+
+    // ===== Utilities =====
+    function shuffle(a){ return a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]); }
+    function escapeHtml(s=''){ return s.replace(/[&<>\"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function escapeAttr(s=''){ return s.replace(/["']/g, c=>({'"':'&quot;','\'':'&#39;'}[c])); }
+
+    // Simple confetti
+    function confetti(){
+      for(let i=0;i<40;i++){
+        const p=document.createElement('div');
+        p.style.position='fixed'; p.style.top='-10px'; p.style.left=Math.random()*100+'%';
+        p.style.width='10px'; p.style.height='14px'; p.style.borderRadius='3px';
+        p.style.background=['#3b82f6','#38bdf8','#22c55e','#f59e0b','#ef4444'][i%5];
+        p.style.transform=`rotate(${Math.random()*360}deg)`;
+        p.style.zIndex=1000; p.style.opacity=.9;
+        document.body.appendChild(p);
+        const dx=(Math.random()-.5)*200; const dur=1200+Math.random()*1200;
+        p.animate([
+          { transform:`translate(0,0) rotate(0deg)` },
+          { transform:`translate(${dx}px, 110vh) rotate(${180+Math.random()*180}deg)` }
+        ],{ duration: dur, easing:'cubic-bezier(.2,.6,.2,1)' }).onfinish = ()=> p.remove();
+      }
+    }
+
+    // Initial loads
+    loadLearn();
+    loadLinks();
+
+  </script>
+</body>
+</html>
